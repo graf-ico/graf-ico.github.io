@@ -1,6 +1,7 @@
 
 import os
 import psycopg2
+from psycopg2.extensions import AsIs
 import codecs
 
 
@@ -57,8 +58,11 @@ class DB:
             """CREATE TABLE IF NOT EXISTS projects (
                 id SERIAL UNIQUE,
                 telegram VARCHAR UNIQUE NOT NULL,
+                title VARCHAR,
                 member_count INT DEFAULT NULL,
-                scraped BOOLEAN DEFAULT 'f'
+                scraped BOOLEAN DEFAULT 'f',
+                telegram_description VARCHAR,
+                category VARCHAR
             );""")
         self.conn.commit()
 
@@ -71,21 +75,21 @@ class DB:
             return {desc.name: value for (desc, value) in zip(self.cur.description, ret)}
         return None
 
-    def addTelegramGroup(self, group, member_count):
+    def addTelegramGroup(self, group, title, member_count, telegram_description, category):
         sGroup = quote_identifier(group)
         self.cur.execute(
-            """INSERT INTO projects (telegram, member_count, scraped) VALUES (%s, %s, 'f') ON CONFLICT (telegram) DO UPDATE SET member_count = %s;""",
-            [group, member_count, member_count])
+            """INSERT INTO projects (telegram, title, member_count, scraped, telegram_description, category) VALUES (%s, %s, %s, 'f', %s, %s) ON CONFLICT (telegram) DO UPDATE SET member_count = %s;""",
+            [group, title, member_count, telegram_description, category, member_count])
         self.cur.execute(
-            "ALTER TABLE groups ADD COLUMN IF NOT EXISTS {} BOOLEAN DEFAULT FALSE;"
-            .format(sGroup))
+            "ALTER TABLE groups ADD COLUMN IF NOT EXISTS %s BOOLEAN DEFAULT FALSE;",
+            [AsIs(sGroup)])
         self.conn.commit()
 
     def updateTelegramGroup(self, group, row, value):
         sRow = quote_identifier(row)
         self.cur.execute(
-            """UPDATE projects SET """ + sRow + """ = %s WHERE telegram = %s;""",
-            [value, group])
+            """UPDATE projects SET %s = %s WHERE telegram = %s;""",
+            [AsIs(sRow), value, group])
         self.conn.commit()
 
     def addUserInGroup(self, group, user, commit=True):
@@ -95,10 +99,8 @@ class DB:
             """INSERT INTO users (id, first_name, last_name, username, bot) VALUES (%s, %s, %s, %s, %s) ON CONFLICT (id) DO NOTHING""",
             [user["id"], user["first_name"], user["last_name"], user["username"], user["bot"]])
         self.cur.execute(
-            """INSERT INTO groups (id, {}) VALUES (%s, 't') ON CONFLICT (id) DO UPDATE SET {} = 't';"""
-            .format(
-                sGroup, sGroup),
-            [user["id"]])
+            """INSERT INTO groups (id, %s) VALUES (%s, 't') ON CONFLICT (id) DO UPDATE SET %s = 't';""",
+            [AsIs(sGroup), user["id"], AsIs(sGroup)])
         if commit:
             self.conn.commit()
 

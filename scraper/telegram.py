@@ -24,9 +24,9 @@ class Telegram:
 
         self.client = client
 
-    def getGroupMemberCount(self, telegramID):
+    def getGroupMemberDetails(self, telegramID):
         result = self.client(GetFullChannelRequest(telegramID))
-        return result.full_chat.participants_count
+        return {"title": result.chats[0].title, "member_count": result.full_chat.participants_count, "telegram_description": result.full_chat.about}
 
     def getUsersInGroup(self, telegramID):
         result = self.client(ResolveUsernameRequest(
@@ -49,4 +49,4 @@ class Telegram:
 
 if __name__ == "__main__":
     tg = Telegram()
-    print(tg.getGroupMemberCount('republicprotocol'))
+    print(tg.getGroupMemberDetails('republicprotocol'))
