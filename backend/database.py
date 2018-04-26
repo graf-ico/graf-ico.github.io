@@ -4,6 +4,7 @@ import psycopg2
 from psycopg2.extensions import AsIs
 import codecs
 
+cache = {}
 
 def quote_identifier(s, errors="strict"):
     # Used for sanitizing columns
@@ -39,6 +40,16 @@ class DB:
         desc = self.cur.description[1:]
         return {row[0]: {desc.name: value for (desc, value) in zip(desc, row[1:])} for row in rows}
 
+
+    def cachedQuery(self, query, params):
+        formatted = query % params
+        if formatted in cache:
+            return cache[formatted]
+        self.cur.execute(query, params)
+        result = self.cur.fetchone()
+        cache[formatted] = result
+        return result
+
     # def getAllTelegramGroupNames(self):
     #     self.cur.execute(
     #         """SELECT telegram FROM PROJECTS;""")
@@ -56,9 +67,9 @@ class DB:
     def getOverlap(self, groupA, groupB):
         sGroupA = quote_identifier(groupA)
         sGroupB = quote_identifier(groupB)
-        self.cur.execute(
-            """SELECT COUNT(*) FROM GROUPS WHERE %s = 't' AND %s = 't';""", [AsIs(sGroupA), AsIs(sGroupB)])
-        return self.cur.fetchone()[0]
+        ret = self.cachedQuery(
+            """SELECT COUNT(*) FROM GROUPS WHERE %s = 't' AND %s = 't';""", (AsIs(sGroupA), AsIs(sGroupB)))
+        return ret[0]
 
     def getOverlaps(self, group):
         self.cur.execute(

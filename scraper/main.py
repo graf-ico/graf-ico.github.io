@@ -1,9 +1,11 @@
 import telegram
 import database
 import sys
+import os
+from PIL import Image, ImageOps, ImageDraw
 
 
-def main():
+def main(groups):
     tg = telegram.Telegram()
 
     try:
@@ -11,8 +13,6 @@ def main():
     except:
         print("unable to connect to the database")
         return
-
-    groups = []
 
     for group in groups:
         try:
@@ -24,20 +24,50 @@ def main():
             print("Failed to process %s" % (group))
 
 
+def formatImage(group, currentPathname):
+    backupPathname = "./original/" + group + ".jpg"
+    finalPathname = "../frontend/public/logos/" + group + ".png"
+
+    # os.rename(image, pathname)
+
+    # Mask
+    size = (640, 640)
+    mask = Image.new('L', size, 0)
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse((0, 0) + size, fill=255)
+
+    # Read image
+    im = Image.open(currentPathname)
+
+    # Save original
+    im.save(backupPathname)
+
+    output = ImageOps.fit(im, mask.size, centering=(0.5, 0.5))
+    output.putalpha(mask)
+
+    output.save(finalPathname, optimize=True)
+
+    print("Saved image to " + finalPathname)
+
+
 def scrapeGroup(db, tg, group, category):
     row = db.getTelegramGroup(group)
-    if row and row["scraped"]:
+    if row and row["scraped"] and False:
         print('Skipping %s...' % (group))
         return
     elif row == None:
         details = tg.getGroupMemberDetails(group)
         db.addTelegramGroup(
             group, details["title"], details["member_count"], category, details["telegram_description"])
+        if details["image"]:
+            formatImage(group, details["image"])
+        count = details["member_count"]
+
     else:
-        count = row.member_count
+        count = row["member_count"]
 
     members = tg.getUsersInGroup(group)
-    print("Found %s of %s users in %s" % (0, count, group))
+    print("Found %s of %s users in %s" % (len(members), count, group))
     db.addUsersInGroup(group, members)
 
     # Mark as being scrapeds
@@ -45,17 +75,17 @@ def scrapeGroup(db, tg, group, category):
 
 
 if __name__ == "__main__":
-    # main()
 
-    db = database.DB()
-    tg = telegram.Telegram()
-
-    db.cur.execute(
-        """SELECT telegram FROM PROJECTS;""")
-    groups = [row[0] for row in db.cur.fetchall()]
-
-    for group in groups:
-        details = tg.getGroupMemberDetails(group)
-        print("Title of %s: %s" % (group, details["title"]))
-        db.updateTelegramGroup(group, 'title',
-                               details["title"])
+    groups = ["bowheadtokensale",
+              "VERGExvg",
+              "VertcoinCrypto",
+              "ViaCoin",
+              "WanchainCHAT",
+              "WavesCommunity",
+              "WeTrustPlatform",
+              "WingsChat",
+              "ZClassicCoin",
+              "ZCoinProject",
+              "ZenCash",
+              "Zenprotocol"]
+    main(groups)

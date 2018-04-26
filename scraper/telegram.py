@@ -1,5 +1,7 @@
 import os
 
+import base64
+
 from telethon import TelegramClient
 
 from telethon.tl.functions.contacts import ResolveUsernameRequest
@@ -26,7 +28,11 @@ class Telegram:
 
     def getGroupMemberDetails(self, telegramID):
         result = self.client(GetFullChannelRequest(telegramID))
-        return {"title": result.chats[0].title, "member_count": result.full_chat.participants_count, "telegram_description": result.full_chat.about}
+        file_path = self.client.download_media(
+            result.full_chat.chat_photo)
+        # with open(file_path, "rb") as image_file:
+        #     image = base64.b64encode(image_file.read())
+        return {"title": result.chats[0].title, "image": file_path, "member_count": result.full_chat.participants_count, "telegram_description": result.full_chat.about}
 
     def getUsersInGroup(self, telegramID):
         result = self.client(ResolveUsernameRequest(
