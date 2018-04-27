@@ -2,6 +2,7 @@ import * as React from 'react';
 
 interface ISidebarProps {
     selectedGroup: string,
+    selectedDetails: any,
 }
 
 class Sidebar extends React.Component<ISidebarProps, {}> {
@@ -12,7 +13,9 @@ class Sidebar extends React.Component<ISidebarProps, {}> {
     public render() {
         return (
             <div id="sidebar">
-                <p>{this.props.selectedGroup}</p>
+                <div className="infomation">
+                    <p>{this.props.selectedGroup}</p>
+                </div>
             </div>
         );
     }

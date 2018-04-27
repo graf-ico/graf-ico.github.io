@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { INodeData } from '../types';
 // import * as scale from 'd3-scale';
 
 
@@ -49,8 +50,8 @@ function pythag(r: number, b: number, coord: number) {
 }
 
 
-function ticked(nodeP: any, imgP: any) {
-    nodeP
+function ticked() {
+    node
         .attr("cx", (d: any) => {
             return d.x = pythag(countToRadius(d.size), d.y, d.x)
         })
@@ -59,27 +60,34 @@ function ticked(nodeP: any, imgP: any) {
         });
 
     link
-        // tslint:disable-next-line:no-console
-        .attr("x1", (d: any) => { console.log(d.source.x); return d.source.x })
+        .attr("x1", (d: any) => d.source.x)
         .attr("y1", (d: any) => d.source.y)
         .attr("x2", (d: any) => d.target.x)
         .attr("y2", (d: any) => d.target.y);
 
-    // tslint:disable-next-line:no-console
-    imgP.attr("x", (d: any) => d.x - countToRadius(d.size));
-    imgP.attr("y", (d: any) => d.y - countToRadius(d.size));
+    img.attr("x", (d: any) => d.x - countToRadius(d.size));
+    img.attr("y", (d: any) => d.y - countToRadius(d.size));
 }
 
 
 
-let svg: any;
+let svg: d3.Selection<d3.BaseType, {}, HTMLElement, any>;
 let simulation: d3.Simulation<{}, any>;
+
+let linkGroup: d3.Selection<d3.BaseType, {}, d3.BaseType, {}>;
+let forcelinks: d3.Force<{}, any> | undefined;
+
 let link: any = null;
+let img: any;
+let node: any;
 
-let linkGroup: any = null;
-let forcelinks: any;
 
-export function initialise(nodes: any[], callback: (group: string) => void) {
+let isInitialized = false;
+function initialise() {
+    if (isInitialized) {
+        return
+    }
+    isInitialized = true
 
     svg = d3.select('#graph-svg').attr("width", "100%")
         .attr("height", "100%")
@@ -117,6 +125,39 @@ export function initialise(nodes: any[], callback: (group: string) => void) {
         .data([]);
 
 
+    forcelinks = simulation.force("link")
+    if (forcelinks) {
+        (forcelinks as any).links([]).distance((lnk: ILinkData) => lnk.distance);
+    }
+
+    // node;
+}
+
+interface ILinkData {
+    source: string,
+    target: string,
+    distance: number,
+    size: number,
+}
+
+export function render(main: INodeData, others: INodeData[]) {
+    initialise();
+
+    const links: ILinkData[] = others.filter((entry: INodeData) => entry.overlap > 0).map((entry: INodeData) => ({ "source": main.id, "target": entry.id, "distance": overlapToDistance(entry.overlap, entry.size, main.size), "size": entry.size }))
+
+    linkGroup.exit().remove();
+
+    link = linkGroup.data(links)
+        .enter().append("line")
+        .attr("stroke", "black")
+        .attr("stroke-width", 2);
+
+    (forcelinks as any).links(links).distance((lnk: ILinkData) => lnk.distance);
+}
+
+export function setNodes(nodes: INodeData[], callback: (group: string) => void) {
+    initialise();
+
     const divs = svg.append("g")
         .attr("class", "nodes")
         .selectAll("circle")
@@ -128,55 +169,33 @@ export function initialise(nodes: any[], callback: (group: string) => void) {
     // .attr("height", 100)
     // .attr("width", 100)
 
-    const img = divs.append("svg:image")
-        .attr("xlink:href", (d: any) => {
+    img = divs.append("svg:image")
+        .attr("xlink:href", (d: INodeData) => {
             try {
-                return require('../../public/logos/' + d.id + '.png')
+                return d.image;
             } catch (err) {
                 return ""
             }
             // "/" + d.id + ".jpg"
         })
-        .attr("height", (d: any) => 2 * countToRadius(d.size))
-        .attr("width", (d: any) => 2 * countToRadius(d.size));
+        .attr("height", (d: INodeData) => 2 * countToRadius(d.size))
+        .attr("width", (d: INodeData) => 2 * countToRadius(d.size));
 
-    const node = divs.append("circle")
-        .attr("r", (d: any) => countToRadius(d.size))
+    node = divs.append("circle")
+        .attr("r", (d: INodeData) => countToRadius(d.size))
         .attr("stroke", "black")
         .attr("stroke-width", 5)
         .attr("fill", "rgba(0,0,0,0)")
-        .on("click", (d: any) => callback(d.id))
+        .on("click", (d: INodeData) => callback(d.id))
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
-            .on("end", dragended));
-
-
-    forcelinks = simulation.force("link")
-    if (forcelinks) {
-        forcelinks.links([]).distance((lnk: any) => lnk.distance);
-    }
-
-    // node;
+            .on("end", dragended) as any);
 
     node.append("title")
-        .text((d: any) => d.id);
+        .text((d: INodeData) => d.id);
 
     simulation
         .nodes(nodes)
-        .on("tick", () => ticked(node, img));
-}
-
-export function render(main: any, others: any[]) {
-
-    const links = others.filter((entry: any) => entry.overlap > 0).map((entry: any) => ({ "source": main.id, "target": entry.id, "distance": overlapToDistance(entry.overlap, entry.size, main.size), "size": entry.size }))
-
-    linkGroup.exit().remove();
-
-    link = linkGroup.data(links)
-        .enter().append("line")
-        .attr("stroke", "black")
-        .attr("stroke-width", 2);
-
-    forcelinks.links(links).distance((lnk: any) => lnk.distance);
+        .on("tick", () => ticked());
 }
