@@ -1,0 +1,28 @@
+
+#sidebar {
+    padding: 20px;
+}
+
+.information {
+    background: white;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.information_first {
+    margin-top: 0;
+}
+
+.sidebar_logo {
+    height: 100px;
+    width: 100px;
+}
+
+.info_left {
+    float: left;
+    margin-right: 20px;
+}
+
+.infor_right {
+    float: left;
+}

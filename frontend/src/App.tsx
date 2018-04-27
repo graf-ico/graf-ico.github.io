@@ -1,13 +1,13 @@
 import axios from 'axios';
 import * as React from 'react';
 import { Col } from 'react-bootstrap';
-import './App.css';
+import './styles/App.css';
 
 import Graph from './components/Graph'
 // import Menu from './components/Menu'
 import Sidebar from './components/Sidebar'
 
-import { IProjects, ProjectName } from './types';
+import { IProjectDetails, IProjects, ProjectName } from './types';
 
 // import logo from './logo.svg';
 
@@ -48,7 +48,7 @@ class App extends React.Component<{}, IAppState> {
   }
 
   public render() {
-    let selectedDetails;
+    let selectedDetails: IProjectDetails | undefined;
     if (this.state.projects) {
       selectedDetails = this.state.projects[this.state.selectedGroup];
       // tslint:disable-next-line:no-console
