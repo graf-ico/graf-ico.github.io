@@ -5,7 +5,7 @@ from psycopg2.extensions import AsIs
 import codecs
 
 
-def quote_identifier(s, errors="strict"):
+def escape_identifier(s, errors="strict"):
     # Used for sanitizing columns
     # https://stackoverflow.com/questions/6514274/how-do-you-escape-strings-for-sqlite-table-column-names-in-python
 
@@ -19,7 +19,11 @@ def quote_identifier(s, errors="strict"):
         error_handler = codecs.lookup_error(errors)
         replacement, _ = error_handler(error)
         encodable = encodable.replace("\x00", replacement)
+    return encodable.replace("\"", "\"\"")
 
+
+def quote_identifier(s, errors="strict"):
+    encodable = escape_identifier(s, errors)
     return "\"" + encodable.replace("\"", "\"\"") + "\""
 
 
@@ -82,7 +86,7 @@ class DB:
     def addTelegramGroup(self, group, title, member_count, telegram_description, category):
         sGroup = quote_identifier(group)
         self.cur.execute(
-            """INSERT INTO projects (telegram, title, member_count, scraped, telegram_description, category) VALUES (%(group)s, %(title)s, %(member_count)s, 'f', %(telegram_description)s, %(category)s) ON CONFLICT (telegram) DO UPDATE SET (title, member_count, telegram_description, category) VALUES  (%(title)s, %(member_count)s, %(telegram_description)s, %(category)s);""",
+            """INSERT INTO projects (telegram, title, member_count, scraped, telegram_description, category) VALUES (%(group)s, %(title)s, %(member_count)s, 'f', %(telegram_description)s, %(category)s) ON CONFLICT (telegram) DO UPDATE SET title=%(title)s, member_count=%(member_count)s, telegram_description=%(telegram_description)s, category=%(category)s;""",
             {'group': group, 'title': title, 'member_count': member_count, 'telegram_description': telegram_description, 'category': category})
         self.cur.execute(
             "ALTER TABLE groups ADD COLUMN IF NOT EXISTS %s BOOLEAN DEFAULT FALSE;",
@@ -138,7 +142,7 @@ class DB:
                 [AsIs(sOverlap), group, overlaps[overlap], AsIs(sOverlap), overlaps[overlap]])
             self.cur.execute(
                 """INSERT INTO overlapped (id, %s) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET %s = %s;""",
-                [sGroup, AsIs(sOverlap), overlaps[overlap], sGroup, overlaps[overlap]])
+                [AsIs(sGroup), overlap, overlaps[overlap], AsIs(sGroup), overlaps[overlap]])
         self.conn.commit()
 
     def calculateOverlap(self, groupA, groupB):

@@ -5,7 +5,7 @@ import os
 from PIL import Image, ImageOps, ImageDraw
 
 
-def main(groups):
+def main(groups, update=True):
     tg = telegram.Telegram()
 
     try:
@@ -16,7 +16,7 @@ def main(groups):
 
     for group in groups:
         try:
-            scrapeGroup(db, tg, group, 'crypto/project', update=False)
+            scrapeGroup(db, tg, group, 'crypto/project', update)
         except KeyboardInterrupt:
             sys.exit()
         except Exception as err:
@@ -79,5 +79,5 @@ def scrapeGroup(db, tg, group, category, update=True):
 
 if __name__ == "__main__":
 
-    groups = []
-    main(groups)
+    groups = ['']
+    main(groups, update=True)
