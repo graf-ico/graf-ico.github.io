@@ -41,6 +41,9 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
             setNodes(nodes, props.setSelectedGroup)
         }
 
+        // tslint:disable-next-line:no-console
+        console.log("Received new props!")
+
         if (props.data && (props.graphedGroup !== this.props.graphedGroup) ||
             (Object.keys(this.props.data).length === 0 && props.graphedGroup)) {
             const relations: IOverlaps = (await axios.get('http://localhost:5000/overlaps/' + props.graphedGroup)).data;

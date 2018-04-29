@@ -42,9 +42,11 @@ class App extends React.Component<{}, IAppState> {
   }
 
   public setSelectedGroup = (group: string) => {
-
-
     this.setState({ selectedGroup: group });
+  }
+
+  public setGraphedGroup = (group: string) => {
+    this.setState({ graphedGroup: group });
   }
 
   public render() {
@@ -61,7 +63,7 @@ class App extends React.Component<{}, IAppState> {
           <Graph data={this.state.projects} setSelectedGroup={this.setSelectedGroup} graphedGroup={this.state.graphedGroup} />
           <Col md={4} className='col' id="side-col" >
             {/* <Menu /> */}
-            <Sidebar selectedDetails={selectedDetails} selectedGroup={this.state.selectedGroup} />
+            <Sidebar selectedDetails={selectedDetails} selectedGroup={this.state.selectedGroup} setGraphedGroup={this.setGraphedGroup} />
           </Col>
         </div>
       </div>

@@ -89,12 +89,17 @@ function initialise() {
     }
     isInitialized = true
 
-    svg = d3.select('#graph-svg').attr("width", "100%")
+    const zoom = d3.zoom().scaleExtent([0.05, 4]);
+    const svgOuter = d3.select('#graph-svg').attr("width", "100%")
         .attr("height", "100%")
-        .call(d3.zoom().scaleExtent([0.2, 4]).on("zoom", () => {
+        .call(zoom.on("zoom", () => {
             svg.attr("transform", d3.event.transform)
-        }))
-        .append("g");
+        }));
+
+    svg = svgOuter.append("g");
+
+    zoom.translateTo(svgOuter as any, -1400, 100);
+    zoom.scaleTo(svgOuter as any, 0.18);
 
     const width = +svg.attr("width");
     const height = +svg.attr("height");
@@ -124,13 +129,10 @@ function initialise() {
     link = linkGroup
         .data([]);
 
-
     forcelinks = simulation.force("link")
     if (forcelinks) {
         (forcelinks as any).links([]).distance((lnk: ILinkData) => lnk.distance);
     }
-
-    // node;
 }
 
 interface ILinkData {
@@ -145,7 +147,8 @@ export function render(main: INodeData, others: INodeData[]) {
 
     const links: ILinkData[] = others.filter((entry: INodeData) => entry.overlap > 0).map((entry: INodeData) => ({ "source": main.id, "target": entry.id, "distance": overlapToDistance(entry.overlap, entry.size, main.size), "size": entry.size }))
 
-    linkGroup.exit().remove();
+    link.remove();
+    linkGroup.remove();
 
     link = linkGroup.data(links)
         .enter().append("line")
@@ -153,6 +156,9 @@ export function render(main: INodeData, others: INodeData[]) {
         .attr("stroke-width", 2);
 
     (forcelinks as any).links(links).distance((lnk: ILinkData) => lnk.distance);
+
+    // Ensure nodes reposition themselves with enough force
+    simulation.alpha(1);
 }
 
 export function setNodes(nodes: INodeData[], callback: (group: string) => void) {
@@ -165,9 +171,6 @@ export function setNodes(nodes: INodeData[], callback: (group: string) => void) 
         .enter().append('g')
         .attr("height", 50)
         .attr("width", 50);
-    // .append('div')
-    // .attr("height", 100)
-    // .attr("width", 100)
 
     img = divs.append("svg:image")
         .attr("xlink:href", (d: INodeData) => {
