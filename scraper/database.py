@@ -82,8 +82,8 @@ class DB:
     def addTelegramGroup(self, group, title, member_count, telegram_description, category):
         sGroup = quote_identifier(group)
         self.cur.execute(
-            """INSERT INTO projects (telegram, title, member_count, scraped, telegram_description, category) VALUES (%s, %s, %s, 'f', %s, %s) ON CONFLICT (telegram) DO UPDATE SET member_count = %s;""",
-            [group, title, member_count, telegram_description, category, member_count])
+            """INSERT INTO projects (telegram, title, member_count, scraped, telegram_description, category) VALUES (%(group)s, %(title)s, %(member_count)s, 'f', %(telegram_description)s, %(category)s) ON CONFLICT (telegram) DO UPDATE SET (title, member_count, telegram_description, category) VALUES  (%(title)s, %(member_count)s, %(telegram_description)s, %(category)s);""",
+            {'group': group, 'title': title, 'member_count': member_count, 'telegram_description': telegram_description, 'category': category})
         self.cur.execute(
             "ALTER TABLE groups ADD COLUMN IF NOT EXISTS %s BOOLEAN DEFAULT FALSE;",
             [AsIs(sGroup)])
@@ -112,6 +112,14 @@ class DB:
         for user in users:
             self.addUserInGroup(group, user, commit=False)
         self.conn.commit()
+
+    def resetUsersInGroup(self, group, commit=True):
+        sGroup = quote_identifier(group)
+        self.cur.execute(
+            """UPDATE groups SET %(group)s = 'f';""",
+            {'group': AsIs(sGroup)})
+        if commit:
+            self.conn.commit()
 
     def setOverlaps(self, group, overlaps):
         self.cur.execute(

@@ -16,7 +16,7 @@ def main(groups):
 
     for group in groups:
         try:
-            scrapeGroup(db, tg, group, 'crypto/project')
+            scrapeGroup(db, tg, group, 'crypto/project', update=False)
         except KeyboardInterrupt:
             sys.exit()
         except Exception as err:
@@ -50,21 +50,21 @@ def formatImage(group, currentPathname):
     print("Saved image to " + finalPathname)
 
 
-def scrapeGroup(db, tg, group, category):
+def scrapeGroup(db, tg, group, category, update=True):
     row = db.getTelegramGroup(group)
-    if row and row["scraped"] and False:
+    if row and row["scraped"] and (not update):
         print('Skipping %s...' % (group))
         return
-    elif row == None:
-        details = tg.getGroupMemberDetails(group)
-        db.addTelegramGroup(
-            group, details["title"], details["member_count"], details["telegram_description"], category)
-        if details["image"]:
-            formatImage(group, details["image"])
-        count = details["member_count"]
 
-    else:
-        count = row["member_count"]
+    details = tg.getGroupMemberDetails(group)
+    db.addTelegramGroup(
+        group, details["title"], details["member_count"], details["telegram_description"], category)
+    if details["image"]:
+        formatImage(group, details["image"])
+    count = details["member_count"]
+
+    # Clear current list of users, but don't commit until after adding them back
+    db.resetUsersInGroup(group, commit=False)
 
     members = tg.getUsersInGroup(group)
     print("Found %s of %s users in %s" % (len(members), count, group))
@@ -79,16 +79,5 @@ def scrapeGroup(db, tg, group, category):
 
 if __name__ == "__main__":
 
-    groups = ["bowheadtokensale",
-              "VERGExvg",
-              "VertcoinCrypto",
-              "ViaCoin",
-              "WanchainCHAT",
-              "WavesCommunity",
-              "WeTrustPlatform",
-              "WingsChat",
-              "ZClassicCoin",
-              "ZCoinProject",
-              "ZenCash",
-              "Zenprotocol"]
+    groups = []
     main(groups)
