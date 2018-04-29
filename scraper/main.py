@@ -58,7 +58,7 @@ def scrapeGroup(db, tg, group, category):
     elif row == None:
         details = tg.getGroupMemberDetails(group)
         db.addTelegramGroup(
-            group, details["title"], details["member_count"], category, details["telegram_description"])
+            group, details["title"], details["member_count"], details["telegram_description"], category)
         if details["image"]:
             formatImage(group, details["image"])
         count = details["member_count"]
@@ -69,6 +69,9 @@ def scrapeGroup(db, tg, group, category):
     members = tg.getUsersInGroup(group)
     print("Found %s of %s users in %s" % (len(members), count, group))
     db.addUsersInGroup(group, members)
+
+    # Set overlaps
+    db.setOverlaps(group, db.calculateOverlaps(group))
 
     # Mark as being scrapeds
     db.updateTelegramGroup(group, 'scraped', True)

@@ -64,6 +64,10 @@ class DB:
                 telegram_description VARCHAR,
                 category VARCHAR
             );""")
+        self.cur.execute(
+            """CREATE TABLE IF NOT EXISTS overlapped (
+                id VARCHAR UNIQUE NOT NULL
+            );""")
         self.conn.commit()
 
     def getTelegramGroup(self, group):
@@ -109,6 +113,47 @@ class DB:
             self.addUserInGroup(group, user, commit=False)
         self.conn.commit()
 
+    def setOverlaps(self, group, overlaps):
+        self.cur.execute(
+            """INSERT INTO overlapped (id) VALUES (%s) ON CONFLICT (id) DO NOTHING""",
+            [group])
+
+        sGroup = quote_identifier(group)
+
+        for overlap in overlaps:
+            sOverlap = quote_identifier(overlap)
+            self.cur.execute(
+                "ALTER TABLE overlapped ADD COLUMN IF NOT EXISTS %s INT DEFAULT 0;",
+                [AsIs(sOverlap)])
+            self.cur.execute(
+                """INSERT INTO overlapped (id, %s) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET %s = %s;""",
+                [AsIs(sOverlap), group, overlaps[overlap], AsIs(sOverlap), overlaps[overlap]])
+            self.cur.execute(
+                """INSERT INTO overlapped (id, %s) VALUES (%s, %s) ON CONFLICT (id) DO UPDATE SET %s = %s;""",
+                [sGroup, AsIs(sOverlap), overlaps[overlap], sGroup, overlaps[overlap]])
+        self.conn.commit()
+
+    def calculateOverlap(self, groupA, groupB):
+        sGroupA = quote_identifier(groupA)
+        sGroupB = quote_identifier(groupB)
+        self.cur.execute(
+            """SELECT COUNT(*) FROM GROUPS WHERE %s = 't' AND %s = 't';""", (AsIs(sGroupA), AsIs(sGroupB)))
+        result = self.cur.fetchone()
+        return result[0]
+
+    def calculateOverlaps(self, group):
+        self.cur.execute(
+            """SELECT telegram FROM PROJECTS where telegram <> %s;""", [group])
+        others = [row[0] for row in self.cur.fetchall()]
+
+        return {other: self.calculateOverlap(group, other) for other in others}
+
+    def getAllTelegramGroups(self):
+        self.cur.execute(
+            """SELECT telegram FROM PROJECTS;""")
+        rows = self.cur.fetchall()
+        return [row[0] for row in rows]
+
 
 if __name__ == "__main__":
 
@@ -117,4 +162,6 @@ if __name__ == "__main__":
     except:
         print("unable to connect to the database")
 
-    db.updateTelegramGroup('republicprotocol', 'scraped', True)
+    for group in db.getAllTelegramGroups():
+        print(group)
+        db.setOverlaps(group, db.calculateOverlaps(group))

@@ -6,6 +6,7 @@ import codecs
 
 cache = {}
 
+
 def quote_identifier(s, errors="strict"):
     # Used for sanitizing columns
     # https://stackoverflow.com/questions/6514274/how-do-you-escape-strings-for-sqlite-table-column-names-in-python
@@ -37,9 +38,7 @@ class DB:
         self.cur.execute(
             """SELECT telegram, title, member_count, telegram_description, category FROM PROJECTS;""")
         rows = self.cur.fetchall()
-        desc = self.cur.description[1:]
-        return {row[0]: {desc.name: value for (desc, value) in zip(desc, row[1:])} for row in rows}
-
+        return {row[0]: {desc.name: value for (desc, value) in zip(self.cur.description[1:], row[1:])} for row in rows}
 
     def cachedQuery(self, query, params):
         formatted = query % params
@@ -64,19 +63,15 @@ class DB:
             return {desc.name: value for (desc, value) in zip(self.cur.description, ret)}
         return None
 
-    def getOverlap(self, groupA, groupB):
-        sGroupA = quote_identifier(groupA)
-        sGroupB = quote_identifier(groupB)
-        ret = self.cachedQuery(
-            """SELECT COUNT(*) FROM GROUPS WHERE %s = 't' AND %s = 't';""", (AsIs(sGroupA), AsIs(sGroupB)))
-        return ret[0]
-
     def getOverlaps(self, group):
+        sGroup = quote_identifier(group)
         self.cur.execute(
-            """SELECT telegram FROM PROJECTS where telegram <> %s;""", [group])
-        others = [row[0] for row in self.cur.fetchall()]
+            """SELECT * FROM overlapped where id = %s;""", [group])
 
-        return {other: self.getOverlap(group, other) for other in others}
+        row = self.cur.fetchone()
+        if row:
+            return {desc.name: col for (col, desc) in zip(row, self.cur.description) if desc.name != "id" and desc.name != sGroup}
+        return None
 
 
 if __name__ == "__main__":
