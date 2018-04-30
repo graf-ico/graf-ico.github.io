@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://graf-ico.github.io",
+  "homepage": "http://graf-ico.github.io/telegram",
   "dependencies": {
     "@types/axios": "^0.14.0",
     "@types/d3": "^5.0.0",
