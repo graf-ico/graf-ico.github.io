@@ -79,5 +79,5 @@ def scrapeGroup(db, tg, group, category, update=True):
 
 if __name__ == "__main__":
 
-    groups = ['']
+    groups = []
     main(groups, update=True)
