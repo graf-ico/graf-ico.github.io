@@ -1,8 +1,7 @@
-import axios from 'axios';
 import * as React from 'react';
-// import * as rd3 from 'react-d3-library';
-import { render, setNodes } from '../lib/Graph';
 
+import * as api from '../lib/api';
+import { render, setNodes } from '../lib/graph';
 import { INodeData, IOverlaps, IProjectDetails, IProjects, ProjectName } from '../types';
 
 // const RD3Component = rd3.Component;
@@ -46,7 +45,9 @@ class Graph extends React.Component<IGraphProps, IGraphState> {
 
         if (props.data && (props.graphedGroup !== this.props.graphedGroup) ||
             (Object.keys(this.props.data).length === 0 && props.graphedGroup)) {
-            const relations: IOverlaps = (await axios.get('http://localhost:5000/overlaps/' + props.graphedGroup)).data;
+            const relations: IOverlaps = await api.getRelations(props.graphedGroup);
+            // tslint:disable-next-line:no-console
+            console.log(relations);
             const main: INodeData = {
                 group: 'main',
                 id: props.graphedGroup,

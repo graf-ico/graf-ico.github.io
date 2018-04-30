@@ -1,4 +1,3 @@
-import axios from 'axios';
 import * as React from 'react';
 import { Col } from 'react-bootstrap';
 import './styles/App.css';
@@ -6,6 +5,8 @@ import './styles/App.css';
 import Graph from './components/Graph'
 // import Menu from './components/Menu'
 import Sidebar from './components/Sidebar'
+
+import * as api from './lib/api';
 
 import { IProjectDetails, IProjects, ProjectName } from './types';
 
@@ -29,7 +30,7 @@ class App extends React.Component<{}, IAppState> {
   }
 
   public async componentDidMount() {
-    const projects: IProjects = (await axios.get('http://localhost:5000/groups')).data;
+    const projects: IProjects = await api.getProjects();
     for (const key of Object.keys(projects)) {
       try {
         projects[key].image = require('../public/logos/' + key + '.png')
