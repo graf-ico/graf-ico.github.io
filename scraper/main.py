@@ -42,10 +42,12 @@ def formatImage(group, currentPathname):
     # Save original
     im.save(backupPathname)
 
+    im = im.resize((160, 160), Image.ANTIALIAS)
+
     output = ImageOps.fit(im, mask.size, centering=(0.5, 0.5))
     output.putalpha(mask)
 
-    output.save(finalPathname, optimize=True)
+    output.save(finalPathname, optimize=True, quality=30)
 
     print("Saved image to " + finalPathname)
 
@@ -79,5 +81,5 @@ def scrapeGroup(db, tg, group, category, update=True):
 
 if __name__ == "__main__":
 
-    groups = []
-    main(groups, update=True)
+    groups = ['CurrentCRNC', 'artoken', 'dockio', 'WePowerNetwork', 'theabyss', 'verimeico', 'thriveico', 'trakinvest', 'beetoken', 'gemsorg', 'play2live', 'Play2Live_RusChat', 'crypterium', 'medicalchain', 'cashbetcoin', 'ClearCoin', 'TimeBoxICO', 'creditscom', 'adsigma', 'RealistaToken', 'dadichat', 'bluzelle', 'MainframeCommunity', 'SapienNetwork', 'zilliqachat']
+    main(groups, update=False)
