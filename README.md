@@ -1,6 +1,7 @@
-# /ico/nnected
+# telegram graph
 
 See:
 
-* [scraper/README.md](./scraper/README.md)
-* [backend/README.md](./backend/README.md)
+* [scraper](./scraper)
+* [backend](./backend)
+* [frontend](./frontend)

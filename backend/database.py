@@ -78,5 +78,6 @@ if __name__ == "__main__":
 
     try:
         db = DB()
-    except:
+    except Exception as err:
         print("unable to connect to the database")
+        print(err)

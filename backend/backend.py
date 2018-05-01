@@ -5,9 +5,9 @@ from flask_restful import Resource, Api
 from json import dumps
 from flask_cors import CORS, cross_origin
 
-app = Flask(__name__)
-CORS(app)
-api = Api(app)
+application = Flask(__name__)
+CORS(application)
+api = Api(application)
 
 
 class AllGroups(Resource):
@@ -37,4 +37,4 @@ api.add_resource(Overlaps, '/overlaps/<string:group>')
 api.add_resource(AllGroups, '/groups')
 
 if __name__ == '__main__':
-    app.run()
+    application.run(host= '0.0.0.0', port=80, ssl_context=('cert.pem', 'key.pem'))
