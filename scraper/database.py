@@ -4,6 +4,9 @@ import psycopg2
 from psycopg2.extensions import AsIs
 import codecs
 
+# from sshtunnel.sshtunnel import SSHTunnelForwarder
+
+PORT=5432
 
 def escape_identifier(s, errors="strict"):
     # Used for sanitizing columns
@@ -32,8 +35,9 @@ class DB:
     def __init__(self):
         SQL_USERNAME = os.environ['SQL_USERNAME']
         SQL_PASSWORD = os.environ['SQL_PASSWORD']
+        DB_URL = os.environ['DB_URL']
         self.conn = psycopg2.connect("dbname='iconnect' user='"+SQL_USERNAME +
-                                     "' host='localhost' password='"+SQL_PASSWORD+"'")
+                                     "'port=5432 host='localhost' password='"+SQL_PASSWORD+"'")
         self.cur = self.conn.cursor()
 
     def dropTables(self):

@@ -42,10 +42,10 @@ def formatImage(group, currentPathname):
     # Save original
     im.save(backupPathname)
 
-    im = im.resize((160, 160), Image.ANTIALIAS)
-
     output = ImageOps.fit(im, mask.size, centering=(0.5, 0.5))
     output.putalpha(mask)
+    
+    output = output.resize((160, 160), Image.ANTIALIAS)
 
     output.save(finalPathname, optimize=True, quality=30)
 
